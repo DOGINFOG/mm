@@ -15,7 +15,7 @@ class Module {
 
 	std::string name() const;
 	bool enabled() const;
-	bool will_delete() const;
+	bool will_remove() const;
 	bool skip_mount() const;
 	char tag() const;
 

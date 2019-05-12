@@ -98,9 +98,12 @@ int exe(const std::vector<std::string> &args) {
 		args[0] == std::string("--help") || args[0] == std::string("-h") ||
 		args[0] == std::string("--usage")) {
 		std::cerr << "Commands:\n"
-				  << "\tl\tlist modules\n"
-				  << "\th\tthis help message\n"
-				  << "\tq\tquit\n";
+				  << "\tl\t\tlist modules\n\n"
+				  << "\td [id or name]\ttoggle disable module\n"
+				  << "\tt [id or name]\ttoggle remove module\n"
+				  << "\tm [id or name]\ttoggle skip mount module\n\n"
+				  << "\th\t\tthis help message\n"
+				  << "\tq\t\tquit\n";
 		return 0;
 	}
 	if (args[0] == std::string("q") || args[0] == std::string("quit") ||
@@ -132,6 +135,61 @@ int exe(const std::vector<std::string> &args) {
 				  << (mod.enabled() ? "enabled" : "disabled") << "\n";
 		return 0;
 	}
+
+	if (args[0] == std::string("r")) {
+		Module mod;
+		bool is_digit = true;
+		for (auto &c : args[1])
+			if (c < '0' || c > '9') {
+				is_digit = false;
+				break;
+			}
+		if (is_digit)
+			mod = modules[atol(args[1].c_str())];
+		else
+			for (auto &m : modules) {
+				if (m.name() == args[1]) {
+					mod = m;
+				}
+			}
+		if (mod.name() == std::string("")) {
+			std::cerr << "Module " << args[1] << " not found\n";
+			return 2;
+		}
+
+		mod.tog_remove();
+		std::cerr << "\"" << mod.name() << "\" will "
+				  << (mod.will_remove() ? "" : "not ") << "remove\n";
+		return 0;
+	}
+
+	if (args[0] == std::string("m")) {
+		Module mod;
+		bool is_digit = true;
+		for (auto &c : args[1])
+			if (c < '0' || c > '9') {
+				is_digit = false;
+				break;
+			}
+		if (is_digit)
+			mod = modules[atol(args[1].c_str())];
+		else
+			for (auto &m : modules) {
+				if (m.name() == args[1]) {
+					mod = m;
+				}
+			}
+		if (mod.name() == std::string("")) {
+			std::cerr << "Module " << args[1] << " not found\n";
+			return 2;
+		}
+
+		mod.tog_mount();
+		std::cerr << "\"" << mod.name() << "\" mount is "
+				  << (mod.skip_mount() ? "" : "not ") << "skiping\n";
+		return 0;
+	}
+
 	if (args[0] == std::string("z")) {
 		for (auto &a : args)
 			std::cerr << a << "\n";

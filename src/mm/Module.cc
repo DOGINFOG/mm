@@ -18,7 +18,7 @@ bool Module::enabled() const {
 	fin.close();
 	return false;
 }
-bool Module::will_delete() const {
+bool Module::will_remove() const {
 	std::fstream fin(mod_path + _name + std::string("/remove"), std::ios::in);
 	if (!fin.is_open())
 		return false;
@@ -35,7 +35,7 @@ bool Module::skip_mount() const {
 }
 
 char Module::tag() const {
-	if (will_delete())
+	if (will_remove())
 		return 'X';
 	if (!enabled())
 		return ' ';
@@ -55,7 +55,21 @@ void Module::tog_enable() {
 }
 
 void Module::tog_remove() {
+	if (will_remove()) {
+		remove((mod_path + _name + std::string("/remove")).c_str());
+		return;
+	}
 	std::fstream fout(mod_path + _name + std::string("/remove"), std::ios::out);
+	fout.close();
+}
+
+void Module::tog_mount() {
+	if (skip_mount()) {
+		remove((mod_path + _name + std::string("/skip_mount")).c_str());
+		return;
+	}
+	std::fstream fout(mod_path + _name + std::string("/skip_mount"),
+					  std::ios::out);
 	fout.close();
 }
 
