@@ -1,6 +1,171 @@
 #include <iostream>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <cstring>
+#include <dirent.h>
 
-int main() {
-	std::cerr << "mm Copyright (C) 2019 DOGINFOG <ftdabcde@gmail.com>\n";
+#include <Module.h>
+
+#define VERSION "0.0.1.0"
+
+std::vector<std::string> parse_args(const char *);
+
+int exe(const std::vector<std::string> &);
+
+void print_head() {
+	std::cerr
+		<< "MagiskManager CLI v" VERSION "\n"
+		<< "Copyright (C) 2019, DOGINFOG <ftdabcde@gmail.com>\n"
+		<< "This program comes with ABSOLUTELY NO WARRANTY;\n"
+		<< "This is free software, and you are welcome to redistribute it\n"
+		<< "under certain conditions;\n\n";
+}
+
+const std::vector<Module> modules{Module::getModuleList()};
+
+int main(int argc, char **argv) {
+	if (argc > 1) {
+		size_t cmdline_len = 0;
+		for (size_t i = 1; i < argc; i++)
+			cmdline_len += strlen(argv[i]) + 1;
+		char *cmdline = new char[cmdline_len];
+		cmdline[0] = '\0';
+		for (size_t i = 1; i < argc; i++) {
+			strcat(cmdline, argv[i]);
+			strcat(cmdline, " ");
+		}
+		std::vector<std::string> args = parse_args(cmdline);
+		delete[] cmdline;
+		return exe(args) > 1;
+	}
+	print_head();
+	std::vector<std::vector<std::string>> history;
+	for (;;) {
+		std::cerr << "?): ";
+		size_t history_index = 0;
+#if 1
+		std::string cmdline;
+		for (;;) {
+			int tmp = getchar();
+			if (tmp & 0xff00) {
+				if (tmp != EOF) {
+					continue;
+					std::cerr << "SKIP";
+				} else {
+					break;
+				}
+			}
+			if ((char)(tmp & 0xff) == 72) {
+				history_index++;
+				if (history_index > history.size()) {
+					history_index--;
+					continue;
+				}
+				std::cerr << "\r?): ";
+				for (size_t i = 0; i < cmdline.length(); i++)
+					std::cerr << " ";
+				std::cerr << "\r?):";
+				cmdline = std::string("");
+				for (auto &arg : history[history.size() - history_index]) {
+					std::cerr << " " << arg;
+					cmdline += arg + std::string(" ");
+				}
+			}
+			if (tmp == '\n' || tmp == '\r' || tmp == '\0')
+				break;
+			cmdline += (char)(tmp & 0xff);
+		}
+		std::vector<std::string> args = parse_args(cmdline.c_str());
+#else
+		char *cmdline = new char[1024];
+		std::cin.getline(cmdline, 1024);
+		std::vector<std::string> args = parse_args(cmdline);
+		delete[] cmdline;
+#endif
+		history.push_back(args);
+		std::cerr << "\n";
+		if (exe(args) == 1)
+			break;
+		std::cerr << "\n";
+	}
 	return 0;
+}
+
+int exe(const std::vector<std::string> &args) {
+	if (!args.size() || args[0] == std::string("h") ||
+		args[0] == std::string("?") || args[0] == std::string("help") ||
+		args[0] == std::string("--help") || args[0] == std::string("-h") ||
+		args[0] == std::string("--usage")) {
+		std::cerr << "Commands:\n"
+				  << "\tl\tlist modules\n"
+				  << "\th\tthis help message\n"
+				  << "\tq\tquit\n";
+		return 0;
+	}
+	if (args[0] == std::string("q") || args[0] == std::string("quit") ||
+		args[0] == std::string("exit"))
+		return 1;
+	if (args[0] == std::string("d")) {
+		Module mod;
+		bool is_digit = true;
+		for (auto &c : args[1])
+			if (c < '0' || c > '9') {
+				is_digit = false;
+				break;
+			}
+		if (is_digit)
+			mod = modules[atol(args[1].c_str())];
+		else
+			for (auto &m : modules) {
+				if (m.name() == args[1]) {
+					mod = m;
+				}
+			}
+		if (mod.name() == std::string("")) {
+			std::cerr << "Module " << args[1] << " not found\n";
+			return 2;
+		}
+
+		mod.tog_enable();
+		std::cerr << "\"" << mod.name() << "\" now is "
+				  << (mod.enabled() ? "enabled" : "disabled") << "\n";
+		return 0;
+	}
+	if (args[0] == std::string("z")) {
+		for (auto &a : args)
+			std::cerr << a << "\n";
+		return 0;
+	}
+	if (args[0] == std::string("l") || args[0] == std::string("ls") ||
+		args[0] == std::string("list")) {
+		std::cerr << "list modules:\n";
+		for (size_t i = 0; i < modules.size(); i++) {
+			auto mod = modules[i];
+			std::cerr << i << " [" << mod.tag() << "] " << mod.name() << "\n";
+		}
+		return 0;
+	}
+	std::cerr << "Unknown command: " << args[0] << "\n";
+	return 2;
+}
+
+std::vector<std::string> parse_args(const char *cmdline) {
+	std::vector<std::string> o;
+	for (const char *p = cmdline, *s = cmdline;; p++) {
+		if (*p == ' ' || *p == '\n' || *p == '\0') {
+			size_t size = p - s;
+			if (size) {
+				char *tmp = new char[size + 1];
+				memcpy(tmp, s, size);
+				tmp[size] = '\0';
+				o.push_back(std::string(tmp));
+				delete[] tmp;
+			}
+			s = p + 1;
+		}
+		if (*p == '\0')
+			break;
+	}
+	return std::move(o);
 }
