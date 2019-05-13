@@ -1,0 +1,22 @@
+pkgname=@PROJECT_NAME@
+pkgver=@PROJECT_VERSION@
+pkgrel=1
+pkgdesc=""
+arch=('x86_64')
+
+source=(
+	"$pkgname-$pkgver.tar.xz"
+)
+
+build() {
+	cd $srcdir/$pkgname-$pkgver
+	cmake -Bbuild && make -Cbuild all
+}
+
+package() {
+	cd $srcdir/$pkgname-$pkgver/build
+	find bin -type f -exec install -Dm755 {} "$pkgdir"/usr/{} \;
+	find lib -type f -exec install -Dm755 {} "$pkgdir"/usr/{} \;
+	cd @CMAKE_SOURCE_DIR@
+	find include -type f -exec install -Dm644 {} "$pkgdir"/usr/{} \;
+}

@@ -1,0 +1,13 @@
+pkgname=@PROJECT_NAME@
+pkgver=@PROJECT_VERSION@
+pkgrel=1
+pkgdesc=""
+arch=('x86_64')
+
+package() {
+	cd @CMAKE_BINARY_DIR@
+	find bin -type f -exec install -Dm755 {} "$pkgdir"/usr/{} \;
+	find lib -type f -exec install -Dm755 {} "$pkgdir"/usr/{} \;
+	cd @CMAKE_SOURCE_DIR@
+	find include -type f -exec install -Dm644 {} "$pkgdir"/usr/{} \;
+}

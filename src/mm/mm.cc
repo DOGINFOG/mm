@@ -7,24 +7,49 @@
 
 #include <Module.h>
 
-#define VERSION "0.0.1.0"
+#define VERSION "0.0.1.1"
 
 std::vector<std::string> parse_args(const char *);
 
 int exe(const std::vector<std::string> &);
 
 void print_head() {
-	std::cerr
-		<< "MagiskManager CLI v" VERSION "\n"
-		<< "Copyright (C) 2019, DOGINFOG <ftdabcde@gmail.com>\n"
-		<< "This program comes with ABSOLUTELY NO WARRANTY;\n"
-		<< "This is free software, and you are welcome to redistribute it\n"
-		<< "under certain conditions;\n\n";
+	static bool printed = false;
+	if (printed)
+		return;
+
+	fprintf(stderr, "MagiskManager CLI v" VERSION "\n"
+					"Copyright (C) 2019, DOGINFOG <ftdabcde@gmail.com>\n"
+					"This program comes with ABSOLUTELY NO WARRANTY;\n"
+					"This is free software, and you are welcome to\n"
+					"redistribute it under certain conditions;\n\n");
+
+	printed = true;
+}
+
+void print_magisk_not_installed() {
+	fprintf(stderr, "Magisk not installed?\n"
+					"This programm support Magisk 18+\n"
+					"Install it, or update\n\n");
+}
+
+bool check_magisk() {
+	DIR *dir = opendir(Module::mod_path.c_str());
+	if (!dir) {
+		return 1;
+	}
+	closedir(dir);
+	return 0;
 }
 
 const std::vector<Module> modules{Module::getModuleList()};
 
 int main(int argc, char **argv) {
+	if (check_magisk()) {
+		print_head();
+		print_magisk_not_installed();
+		return 1;
+	}
 	if (argc > 1) {
 		size_t cmdline_len = 0;
 		for (size_t i = 1; i < argc; i++)
@@ -42,7 +67,8 @@ int main(int argc, char **argv) {
 	print_head();
 	std::vector<std::vector<std::string>> history;
 	for (;;) {
-		std::cerr << "?): ";
+		static const char response[]{"\r?): "};
+		fprintf(stderr, response);
 		size_t history_index = 0;
 #if 1
 		std::string cmdline;
@@ -51,7 +77,6 @@ int main(int argc, char **argv) {
 			if (tmp & 0xff00) {
 				if (tmp != EOF) {
 					continue;
-					std::cerr << "SKIP";
 				} else {
 					break;
 				}
@@ -62,10 +87,10 @@ int main(int argc, char **argv) {
 					history_index--;
 					continue;
 				}
-				std::cerr << "\r?): ";
+				fprintf(stderr, response);
 				for (size_t i = 0; i < cmdline.length(); i++)
-					std::cerr << " ";
-				std::cerr << "\r?):";
+					fprintf(stderr, " ");
+				fprintf(stderr, response);
 				cmdline = std::string("");
 				for (auto &arg : history[history.size() - history_index]) {
 					std::cerr << " " << arg;
@@ -84,10 +109,10 @@ int main(int argc, char **argv) {
 		delete[] cmdline;
 #endif
 		history.push_back(args);
-		std::cerr << "\n";
+		fprintf(stderr, "\n");
 		if (exe(args) == 1)
 			break;
-		std::cerr << "\n";
+		fprintf(stderr, "\n");
 	}
 	return 0;
 }
@@ -97,13 +122,13 @@ int exe(const std::vector<std::string> &args) {
 		args[0] == std::string("?") || args[0] == std::string("help") ||
 		args[0] == std::string("--help") || args[0] == std::string("-h") ||
 		args[0] == std::string("--usage")) {
-		std::cerr << "Commands:\n"
-				  << "\tl\t\tlist modules\n\n"
-				  << "\td [id or name]\ttoggle disable module\n"
-				  << "\tt [id or name]\ttoggle remove module\n"
-				  << "\tm [id or name]\ttoggle skip mount module\n\n"
-				  << "\th\t\tthis help message\n"
-				  << "\tq\t\tquit\n";
+		fprintf(stderr, "Commands:\n"
+						"\tl\t\tlist modules\n\n"
+						"\td [id or name]\ttoggle disable module\n"
+						"\tt [id or name]\ttoggle remove module\n"
+						"\tm [id or name]\ttoggle skip mount module\n\n"
+						"\th\t\tthis help message\n"
+						"\tq\t\tquit\n");
 		return 0;
 	}
 	if (args[0] == std::string("q") || args[0] == std::string("quit") ||
@@ -126,13 +151,13 @@ int exe(const std::vector<std::string> &args) {
 				}
 			}
 		if (mod.name() == std::string("")) {
-			std::cerr << "Module " << args[1] << " not found\n";
+			fprintf(stderr, "Module %s not found\n", args[1].c_str());
 			return 2;
 		}
 
 		mod.tog_enable();
-		std::cerr << "\"" << mod.name() << "\" now is "
-				  << (mod.enabled() ? "enabled" : "disabled") << "\n";
+		fprintf(stderr, "%s now is %s\n", mod.name().c_str(),
+				mod.enabled() ? "enabled" : "disabled");
 		return 0;
 	}
 
@@ -153,13 +178,13 @@ int exe(const std::vector<std::string> &args) {
 				}
 			}
 		if (mod.name() == std::string("")) {
-			std::cerr << "Module " << args[1] << " not found\n";
+			fprintf(stderr, "Module %s not found\n", args[1].c_str());
 			return 2;
 		}
 
 		mod.tog_remove();
-		std::cerr << "\"" << mod.name() << "\" will "
-				  << (mod.will_remove() ? "" : "not ") << "remove\n";
+		fprintf(stderr, "\"%s\" will%s remove\n", mod.name().c_str(),
+				mod.will_remove() ? "" : " not");
 		return 0;
 	}
 
@@ -180,31 +205,33 @@ int exe(const std::vector<std::string> &args) {
 				}
 			}
 		if (mod.name() == std::string("")) {
-			std::cerr << "Module " << args[1] << " not found\n";
+			fprintf(stderr, "Module %s not found\n", args[1].c_str());
 			return 2;
 		}
 
 		mod.tog_mount();
-		std::cerr << "\"" << mod.name() << "\" mount is "
-				  << (mod.skip_mount() ? "" : "not ") << "skiping\n";
+		fprintf(stderr, "\"%s\" mount is%s skipping\n", mod.name().c_str(),
+				mod.skip_mount() ? "" : " not");
 		return 0;
 	}
 
 	if (args[0] == std::string("z")) {
 		for (auto &a : args)
-			std::cerr << a << "\n";
+			fprintf(stderr, "%s\n", a.c_str());
 		return 0;
 	}
 	if (args[0] == std::string("l") || args[0] == std::string("ls") ||
 		args[0] == std::string("list")) {
-		std::cerr << "list modules:\n";
+		fprintf(stderr, "list modules:\n");
 		for (size_t i = 0; i < modules.size(); i++) {
 			auto mod = modules[i];
-			std::cerr << i << " [" << mod.tag() << "] " << mod.name() << "\n";
+			fprintf(stderr, "[%lu] [%c] %s\n", i, mod.tag(),
+					mod.name().c_str());
 		}
 		return 0;
 	}
-	std::cerr << "Unknown command: " << args[0] << "\n";
+
+	fprintf(stderr, "Unknown command: %s\n", args[0].c_str());
 	return 2;
 }
 

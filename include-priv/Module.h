@@ -7,14 +7,20 @@
 class Module {
   private:
 	std::string _name;
-	static const std::string mod_path;
+
+	std::string full_path(const std::string &path = std::string("")) const;
 
   public:
+	static const std::string mod_path;
+
 	Module();
 	Module(const std::string &name);
 
 	std::string name() const;
-	bool enabled() const;
+
+	[[deprecated]] bool enabled() const;
+
+	bool disabled() const;
 	bool will_remove() const;
 	bool skip_mount() const;
 	char tag() const;
