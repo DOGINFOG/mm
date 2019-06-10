@@ -142,7 +142,7 @@ int exe(const std::vector<std::string> &args) {
 		fprintf(stderr, "Commands:\n"
 						"\tl\t\tlist modules\n\n"
 						"\td [id or name]\ttoggle disable module\n"
-						"\tt [id or name]\ttoggle remove module\n"
+						"\tr [id or name]\ttoggle remove module\n"
 						"\tm [id or name]\ttoggle skip mount module\n\n"
 						"\th\t\tthis help message\n"
 						"\tq\t\tquit\n");
