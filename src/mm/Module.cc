@@ -32,6 +32,7 @@ const std::string Module::mod_path(
 const static std::string disable_path("/disable");
 const static std::string remove_path("/remove");
 const static std::string skip_mount_path("/skip_mount");
+const static std::string updated_path("/update");
 
 Module::Module(const std::string &name) : _name(name) {}
 Module::Module() : _name(std::string("")) {}
@@ -39,6 +40,14 @@ Module::Module() : _name(std::string("")) {}
 std::string Module::name() const { return _name; }
 
 bool Module::enabled() const { return !disabled(); }
+
+bool Module::updated() const {
+	std::fstream fin(mod_path + _name + updated_path, std::ios::in);
+	if (!fin.is_open())
+		return false;
+	fin.close();
+	return true;
+}
 
 bool Module::disabled() const {
 	std::fstream fin(mod_path + _name + disable_path, std::ios::in);

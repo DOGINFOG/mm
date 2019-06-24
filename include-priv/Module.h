@@ -37,6 +37,8 @@ class Module {
 
 	[[deprecated]] bool enabled() const;
 
+	bool updated() const;
+
 	bool disabled() const;
 	bool will_remove() const;
 	bool skip_mount() const;
