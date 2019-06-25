@@ -21,7 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <Module.h>
 
 const std::string Module::mod_path(
-#if !defined(TEMP) || defined(__aarch64__)
+#ifdef __aarch64__
 	"/data/adb/modules/"
 #else
 #warning this is temporary directory
