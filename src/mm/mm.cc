@@ -193,6 +193,10 @@ int exe(const std::vector<std::string> &args) {
 				}
 			}
 	}
+	if (args.size() < 1) {
+		fprintf(stderr, "enter '?' for help\n");
+		return 2;
+	}
 	auto func = mm_map.find(args[0]);
 	if (func == mm_map.end()) {
 		fprintf(stderr,
