@@ -20,14 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <Module.h>
 
-const std::string Module::mod_path(
-#ifdef __aarch64__
-	"/data/adb/modules/"
-#else
-#warning this is temporary directory
-	"./test_env/"
-#endif
-);
+const std::string Module::mod_path("/data/adb/modules/");
 
 const static std::string disable_path("/disable");
 const static std::string remove_path("/remove");
@@ -38,8 +31,6 @@ Module::Module(const std::string &name) : _name(name) {}
 Module::Module() : _name(std::string("")) {}
 
 std::string Module::name() const { return _name; }
-
-bool Module::enabled() const { return !disabled(); }
 
 bool Module::updated() const {
 	std::fstream fin(mod_path + _name + updated_path, std::ios::in);

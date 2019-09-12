@@ -35,8 +35,6 @@ class Module {
 
 	std::string name() const;
 
-	[[deprecated]] bool enabled() const;
-
 	bool updated() const;
 
 	bool disabled() const;

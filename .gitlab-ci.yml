@@ -1,0 +1,13 @@
+image: gcc
+
+before_script:
+    - apt-get update --yes
+    - apt-get install --yes cmake
+    - git submodule update --init cmake
+
+build:
+    script:
+        - mkdir build
+        - cmake -Bbuild .
+        - cmake --build build --target all
+
